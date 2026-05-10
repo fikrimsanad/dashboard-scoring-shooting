@@ -20,6 +20,17 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## External API adapter
+
+Struktur yang direkomendasikan untuk menghubungi API di luar project pada App Router:
+
+- Simpan adapter pada `lib/external-api/client.ts` dan tandai sebagai server-only.
+- Panggil adapter langsung dari Server Component jika data tidak perlu diambil dari browser.
+- Tambahkan Route Handler seperti `app/api/external/posts/route.ts` jika Client Component perlu endpoint internal yang aman.
+- Simpan `EXTERNAL_API_BASE_URL` dan `EXTERNAL_API_TOKEN` di environment variable.
+
+Contoh environment tersedia di `.env.example`.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
