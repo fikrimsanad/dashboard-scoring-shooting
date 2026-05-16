@@ -17,13 +17,37 @@ export async function POST(req: Request) {
   }
 }
 
+function computeTotal(score: { technical?: Record<string, number>; tactical?: Record<string, number>; sop?: Record<string, number> }) {
+  const sum = (obj: Record<string, number> = {}) =>
+    Object.values(obj).reduce((acc, v) => acc + (Number(v) || 0), 0);
+  const total_technical = sum(score.technical ?? {});
+  const total_tactical = sum(score.tactical ?? {});
+  const total_sop = sum(score.sop ?? {});
+  return { total_technical, total_tactical, total_sop, total_score: total_technical + total_tactical + total_sop };
+}
+
 export async function GET() {
   try {
     const supabase = createServerClient();
-    const { data, error } = await supabase.from('scores').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('scores')
+      .select('*, personnel:personnel_id (name, nrp, rank, unit)')
+      .order('created_at', { ascending: false });
     if (error) throw error;
-    return NextResponse.json(data);
-  } catch (err) {
+    const enriched = (data ?? []).map((score) => {
+      const p = score.personnel as { name?: string; nrp?: string; rank?: string; unit?: string } | null;
+      const totals = computeTotal(score as Parameters<typeof computeTotal>[0]);
+      return {
+        ...score,
+        personnel_name: p?.name ?? '',
+        personnel_nrp: p?.nrp ?? '',
+        personnel_rank: p?.rank ?? '',
+        personnel_unit: p?.unit ?? '',
+        ...totals,
+      };
+    });
+    return NextResponse.json(enriched);
+  } catch {
     return NextResponse.json({ detail: 'Failed to fetch scores' }, { status: 500 });
   }
 }

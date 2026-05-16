@@ -24,7 +24,7 @@ export default async function proxy(req: NextRequest) {
   }
 
   if (isPublicOnlyRoute && session?.userId) {
-    return NextResponse.redirect(new URL("/", req.nextUrl));
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
   }
 
   return NextResponse.next();

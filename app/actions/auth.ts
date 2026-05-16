@@ -23,24 +23,34 @@ export async function login(
 
   const { username, password } = validatedFields.data;
 
-  const supabase = createServerClient();
-  const { data: user, error } = await supabase
-    .from("users")
-    .select("id, password_hash, role")
-    .eq("username", username)
-    .single();
+  let userId: string;
+  let userRole: string;
 
-  if (error || !user) {
-    return { message: "Invalid username or password." };
+  try {
+    const supabase = createServerClient();
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("id, password_hash, role")
+      .eq("username", username)
+      .single();
+
+    if (error || !user) {
+      return { message: "Invalid username or password." };
+    }
+
+    const passwordMatch = await compare(password, user.password_hash as string);
+    if (!passwordMatch) {
+      return { message: "Invalid username or password." };
+    }
+
+    userId = user.id as string;
+    userRole = user.role as string;
+  } catch {
+    return { message: "Login failed. Please try again." };
   }
 
-  const passwordMatch = await compare(password, user.password_hash as string);
-  if (!passwordMatch) {
-    return { message: "Invalid username or password." };
-  }
-
-  await createSession(user.id as string, user.role as string);
-  redirect("/");
+  await createSession(userId, userRole);
+  redirect("/dashboard");
 }
 
 export async function logout() {
